@@ -1,35 +1,40 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useMediaQuery } from 'react-responsive';
+import { Route, Routes } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Layout } from './Layout';
+import { Login } from './Login';
+import handleRecordingComplete from './handleRecordingComplete';
 
-function App() {
-  const [count, setCount] = useState(0)
+export function App() {
+  const [location, setLocation] = useState(null);
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${latitude}+${longitude}&key=209e499711c840c495f32d6fcf8017bf`);
+          const data = await response.json();
+          const { city, country } = data.results[0].components;
+          setLocation(`${city}, ${country}`);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        }
+      );
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
+  }, []);
 
-export default App
+  // const isMobile = useMediaQuery({ query: '(max-width: 425px)' });
+  const isMobile = true
+  if (isMobile) {
+    return (
+      <Routes>
+        <Route path="/" element={<Layout onRecordingComplete={handleRecordingComplete} />} />
+        <Route path='/login' element={<Login />} />
+      </Routes>
+    );
+  }
+};
