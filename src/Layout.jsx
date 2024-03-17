@@ -4,6 +4,8 @@ import Navbar from './Navbar';
 import styles from './Layout.module.scss'
 import Modal from './Modal';
 import axios from 'axios';
+import ModalBegin from './ModalBegin';
+
 
 export function Layout() {
     const [mediaRecorder, setMediaRecorder] = useState(null);
@@ -12,7 +14,15 @@ export function Layout() {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalOpenPerson, setModalOpenPerson] = useState(false);
 
+    const handleSuccessfulUpload = (data) => {
+        const text = `Search results:\n${data.links?.join('\n') || 'No results found.'}`;
+        setInformation(text);
+        setModalOpen(true)
+    };
+
     const handleRecordingComplete = (audioBlob) => {
+        setModalOpen(true)
+        setInformation('Waiting for the results...')
         let category;
         const formData = new FormData();
         formData.append('file', audioBlob, 'audio.mp3'); // 'audio.wav' is the filename. You can change this as needed.
@@ -45,6 +55,7 @@ export function Layout() {
                 console.log('ChatGPT response:', chatGptResponse.data);
                 category = chatGptResponse.data.category;
 
+
                 // Determine which endpoint to call based on the category
                 let targetURL;
                 switch (category) {
@@ -55,7 +66,6 @@ export function Layout() {
                         targetURL = newsURL;
                         break;
                     case 'person-search':
-                        targetURL = personSearchURL;
                         setModalOpenPerson(true)
                         break;
                     case 'meeting':
@@ -82,7 +92,7 @@ export function Layout() {
                 }
                 else {
                     if (category === 'weather') {
-                        const text = `Temperature: ${finalResponse.data.temperature}\nDescription: ${finalResponse.data.description}\nHumidity: ${finalResponse.data.humidity}\nWind Speed: ${finalResponse.data.wind_speed}`
+                        const text = `Город: ${finalResponse.data.city_name}\nTemperature: ${finalResponse.data.temperature}\nDescription: ${finalResponse.data.description}\nHumidity: ${finalResponse.data.humidity}\nWind Speed: ${finalResponse.data.wind_speed}`
                         setInformation(text)
                         setModalOpen(true)
                     }
@@ -90,9 +100,8 @@ export function Layout() {
                         setInformation(finalResponse.data.response)
                         setModalOpen(true)
                     }
-                    else if (category === 'person-search') {
-                        setModalOpenPerson(false)
-                        const text = `${finalResponse.data.links[0]}\n${finalResponse.data.links[1]}\n${finalResponse.data.links[2]}`
+                    else if (category === 'meeting') {
+                        const text = `Meeting was succesfully created.\nLink to the meeting:\n${finalResponse.data.meeting}`
                         setInformation(text)
                         setModalOpen(true)
                     }
@@ -138,6 +147,7 @@ export function Layout() {
         }
     };
 
+
     const handleClick = () => {
         const name = localStorage.getItem('userName')
         const token = localStorage.getItem('userToken')
@@ -157,15 +167,13 @@ export function Layout() {
         setModalOpen(false);
     };
 
-    const handleClosePersonModal = () => {
-        setModalOpenPerson(false);
-    }
 
     return (
         <div>
             <Navbar />
+            <ModalBegin />
             {modalOpen && <Modal text={information} handleCloseModal={handleCloseModal} />}
-            {modalOpenPerson && <Modal handleCloseModal={handleClosePersonModal} avatar={true} />}
+            {modalOpenPerson && <Modal handleCloseModal={() => setModalOpenPerson(false)} onUploadSuccess={handleSuccessfulUpload} avatar={true} />}
             <button className={styles.microphone} onClick={handleClick}>
                 <Mic style={isRecording ? { stroke: '#308e30' } : { stroke: '#c83d3d' }} size={48} strokeWidth={1.75} />
             </button>

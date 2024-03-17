@@ -1,19 +1,28 @@
-import styles from './Modal.module.scss'
+import React, { useState } from 'react';
+import styles from './Modal.module.scss';
 import { CircleX } from 'lucide-react';
-import TypingEffect from './TypingEffect';
 import axios from 'axios';
-import { useState } from 'react';
 
-const Modal = ({ text = "", handleCloseModal, avatar = false }) => {
+const Modal = ({ text = "", handleCloseModal, onUploadSuccess, avatar = false }) => {
     const [file, setFile] = useState(null);
 
     const handleFileChange = (event) => {
         setFile(event.target.files[0]);
     };
 
+    const renderTextWithLinks = (text) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.split(urlRegex).map((part, index) => {
+            if (part.match(urlRegex)) {
+                return <a key={index} href={part} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>{part}</a>;
+            } else {
+                return part;
+            }
+        });
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
-
         if (!file) {
             alert("Please select a file first.");
             return;
@@ -21,16 +30,17 @@ const Modal = ({ text = "", handleCloseModal, avatar = false }) => {
 
         const formData = new FormData();
         formData.append('photo', file);
-
         try {
             const response = await axios.post('http://192.168.8.100:5000/person-search', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-
-            console.log(response.data);
             alert("Upload successful!");
+            if (onUploadSuccess) {
+                onUploadSuccess(response.data); // Call the callback with the server response
+            }
+            handleCloseModal(); // Close the modal
         } catch (error) {
             console.error("Error uploading the file", error);
             alert("Failed to upload the file.");
@@ -46,14 +56,13 @@ const Modal = ({ text = "", handleCloseModal, avatar = false }) => {
                     </button>
                 </div>
                 <div className={styles.modalBody}>
-                    {text && <TypingEffect text={text} speed={110} />}
-                    {avatar
-                        &&
+                    {text && <pre>{renderTextWithLinks(text)}</pre>}
+                    {avatar && (
                         <form onSubmit={handleSubmit}>
                             <input type="file" onChange={handleFileChange} />
                             <button type="submit">Upload</button>
                         </form>
-                    }
+                    )}
                 </div>
             </div>
         </div>
