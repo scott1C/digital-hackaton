@@ -3,7 +3,6 @@ import { Route, Routes } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Layout } from './Layout';
 import { Login } from './Login';
-import handleRecordingComplete from './handleRecordingComplete';
 
 export function App() {
   const [location, setLocation] = useState(null);
@@ -32,7 +31,7 @@ export function App() {
   if (isMobile) {
     return (
       <Routes>
-        <Route path="/" element={<Layout onRecordingComplete={handleRecordingComplete} />} />
+        <Route path="/" element={<Layout />} />
         <Route path='/login' element={<Login />} />
       </Routes>
     );

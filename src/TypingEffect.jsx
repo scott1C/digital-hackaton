@@ -17,7 +17,7 @@ const TypingEffect = ({ text, speed }) => {
         return () => clearInterval(typingTimer);
     }, [text, speed]);
 
-    return <p>{displayText}</p>;
+    return <pre>{displayText}</pre>;
 };
 
 export default TypingEffect
